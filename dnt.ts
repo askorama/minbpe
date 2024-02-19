@@ -26,6 +26,13 @@ await build({
     author: {
       name: "Michele Riva",
       url: "https://github.com/MicheleRiva"
+    },
+    dependencies: {
+      'unicode-properties': '^1.4.1'
+    },
+    devDependencies: {
+      '@types/node': '^20.11.19',
+      '@types/unicode-properties': '^1.3.2'
     }
   },
   postBuild() {
