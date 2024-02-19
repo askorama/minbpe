@@ -101,15 +101,18 @@ export class GPT4Tokenizer extends RegexTokenizer {
   }
 
   // This is a pretrained tokenizer; it is not intended to be trained
-  train(text: string, vocabSize: number, verbose: boolean = false): void {
+  // deno-lint-ignore no-unused-vars
+  train(text: string, vocabSize: number, verbose = false): void {
     throw new Error('GPT4Tokenizer cannot be trained.')
   }
 
   // Save/load would require some thought
+  // deno-lint-ignore no-unused-vars
   save(filePrefix: string): void {
     throw new Error('GPT4Tokenizer cannot be saved.')
   }
 
+  // deno-lint-ignore no-unused-vars
   load(modelFile: string): void {
     throw new Error('GPT4Tokenizer cannot be loaded.')
   }

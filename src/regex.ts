@@ -1,5 +1,6 @@
 import { getStats, merge, Tokenizer } from './base.ts'
 
+// deno-lint-ignore no-unused-vars
 const GPT2_SPLIT_PATTERN =
   `'(?:[sdmt]|ll|ve|re)| ?\\p{L}+| ?\\p{N}+| ?[^\\s\\p{L}\\p{N}]+|\\s+(?!\\S)|\\s+`
 const GPT4_SPLIT_PATTERN =
