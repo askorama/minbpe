@@ -1,5 +1,5 @@
 import { assertEquals } from 'https://deno.land/std@0.216.0/assert/assert_equals.ts'
-// import { get_encoding } from 'npm:tiktoken'
+// import { get_encoding } from 'npm:tiktoken@1.0.13'
 import {
   BasicTokenizer,
   //GPT4Tokenizer,

@@ -1,5 +1,5 @@
 import fs from 'node:fs'
-import unicode from 'npm:unicode-properties'
+import unicode from 'npm:unicode-properties@1.4.1'
 
 /**
  * Given a list of integers, return a dictionary of counts of consecutive pairs

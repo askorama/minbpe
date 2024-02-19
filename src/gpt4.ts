@@ -1,4 +1,4 @@
-import { get_encoding } from 'npm:tiktoken'
+import { get_encoding } from 'npm:tiktoken@1.0.13'
 import { RegexTokenizer } from './regex.ts'
 
 function bpe(
