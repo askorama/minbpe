@@ -1,8 +1,12 @@
 import { assertEquals } from 'https://deno.land/std@0.216.0/assert/assert_equals.ts'
-import { get_encoding } from 'npm:tiktoken'
-import { BasicTokenizer, GPT4Tokenizer, RegexTokenizer } from '../src/index.ts'
+// import { get_encoding } from 'npm:tiktoken'
+import {
+  BasicTokenizer,
+  //GPT4Tokenizer,
+  RegexTokenizer,
+} from '../src/index.ts'
 
-const taylorswiftFile = new URL('./taylorswift.txt', import.meta.url).pathname
+// const taylorswiftFile = new URL('./taylorswift.txt', import.meta.url).pathname
 const testStrings = [
   '',
   '?',
