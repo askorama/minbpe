@@ -54,8 +54,12 @@ export class GPT4Tokenizer extends RegexTokenizer {
 
   constructor() {
     super()
+
     const enc = get_encoding('cl100k_base')
+    // @ts-ignore - @todo: fix this later
     const mergeableRanks = enc.mergeableRanks
+    enc.free()
+
     this.merges = recoverMerges(mergeableRanks)
     // Reconstruct the vocab from the merges
     this.vocab = new Map<number, Uint8Array>()

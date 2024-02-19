@@ -2,13 +2,13 @@
   "version": "0.0.1",
   "name": "@orama/minbpe",
   "exports": {
-    ".": "./src/main.ts"
+    ".": "./src/index.ts"
   },
   "tasks": {
     "dev": "deno run --watch ./src/index.ts"
   },
   "fmt": {
-    "lineWidth": 100,
+    "lineWidth": 120,
     "semiColons": false,
     "singleQuote": true,
     "include": ["./src/**/*.ts", "./tests/**/*.ts"]

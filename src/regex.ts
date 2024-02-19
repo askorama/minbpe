@@ -1,14 +1,13 @@
 import { getStats, merge, Tokenizer } from './base.ts'
 
 // deno-lint-ignore no-unused-vars
-const GPT2_SPLIT_PATTERN =
-  `'(?:[sdmt]|ll|ve|re)| ?\\p{L}+| ?\\p{N}+| ?[^\\s\\p{L}\\p{N}]+|\\s+(?!\\S)|\\s+`
+const GPT2_SPLIT_PATTERN = `'(?:[sdmt]|ll|ve|re)| ?\\p{L}+| ?\\p{N}+| ?[^\\s\\p{L}\\p{N}]+|\\s+(?!\\S)|\\s+`
 const GPT4_SPLIT_PATTERN =
-  `'(?:[sdmt]|ll|ve|re)|[^\\r\\n\\p{L}\\p{N}]?+\\p{L}+|\\p{N}{1,3}| ?[^\\s\\p{L}\\p{N}]++[\\r\\n]*|\\s*[\\r\\n]|\\s+(?!\\S)|\\s+`
+  `'(?:[sdmt]|ll|ve|re)|[^\\r\\n\\p{L}\\p{N}]?\\p{L}+|\\p{N}{1,3}| ?[^\\s\\p{L}\\p{N}]+[\\r\\n]*|\\s*[\\r\\n]|\\s+(?!\\S)|\\s+`
 
 export class RegexTokenizer extends Tokenizer {
   pattern: string
-  private compiledPattern: RegExp
+  compiledPattern: RegExp
 
   constructor() {
     super()
@@ -31,30 +30,41 @@ export class RegexTokenizer extends Tokenizer {
     }
     for (let i = 0; i < numMerges; i++) {
       const stats: { [key: string]: number } = {}
+
       ids.forEach((chunkIds) => {
         // @todo: avoid conversion to map
         const mapStat = new Map(Object.entries(chunkIds))
         getStats(chunkIds, mapStat)
       })
 
+      if (stats.size === 0) {
+        if (verbose) {
+          console.warn('No more merges can be performed, stats is empty.')
+        }
+        break
+      }
+
+      if (Object.keys(stats).length === 0) {
+        break
+      }
+
       const pair = Object.entries(stats).reduce((a, b) => (stats[a[0]] > stats[b[0]] ? a : b))[0]
-      const idx = 256 + i
+      const newIdx = 256 + i
 
-      ids = ids.map((chunkIds) =>
-        merge(chunkIds, pair.split(',').map(Number) as [number, number], idx)
-      )
+      ids = ids.map((chunkIds) => merge(chunkIds, pair.split(',').map(Number) as [number, number], newIdx))
 
-      merges[pair] = idx
+      merges[pair] = newIdx
       const [p0, p1] = pair.split(',').map(Number)
-      vocab[idx] = new Uint8Array([...vocab[p0], ...vocab[p1]])
+      vocab[newIdx] = new Uint8Array([...vocab[p0], ...vocab[p1]])
 
       if (verbose) {
-        console.log(`merge ${i + 1}/${numMerges}: ${pair} -> ${idx} had ${stats[pair]} occurrences`)
+        console.log(`merge ${i + 1}/${numMerges}: ${pair} -> ${newIdx} had ${stats[pair]} occurrences`)
       }
     }
 
     this.merges = new Map(Object.entries(merges))
-    this.vocab = new Map(Object.entries(vocab))
+    // @ts-ignore - @todo: fix this later
+    this.vocab = new Map(Object.entries(vocab).map(([k, v]) => [Number(k), v]))
   }
 
   decode(ids: number[]): string {
@@ -65,14 +75,15 @@ export class RegexTokenizer extends Tokenizer {
     return new TextDecoder().decode(textBytes)
   }
 
-  private _encodeChunk(textBytes: Uint8Array): number[] {
+  _encodeChunk(textBytes: Uint8Array): number[] {
     let ids = Array.from(textBytes)
     while (ids.length >= 2) {
       const stats = getStats(ids)
-      // @todo: avoid conversion to object
+      if (Object.keys(stats).length === 0) {
+        break
+      }
       const mergesObj = Object.fromEntries(this.merges.entries())
-      const pair =
-        Object.entries(stats).reduce((a, b) => (mergesObj[a[0]] < mergesObj[b[0]] ? a : b))[0]
+      const pair = Object.entries(stats).reduce((a, b) => (mergesObj[a[0]] < mergesObj[b[0]] ? a : b))[0]
       if (!(pair in this.merges)) {
         break
       }

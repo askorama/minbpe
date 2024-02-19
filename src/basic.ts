@@ -5,7 +5,7 @@ export class BasicTokenizer extends Tokenizer {
     super()
   }
 
-  train(text: string, vocabSize: number, verbose = false): void {
+  train(text: string, vocabSize: number, verbose = true): void {
     if (vocabSize < 256) {
       throw new Error('Vocab size must be at least 256')
     }
@@ -21,21 +21,20 @@ export class BasicTokenizer extends Tokenizer {
     }
     for (let i = 0; i < numMerges; i++) {
       const stats = getStats(ids)
-      // @todo: avoid conversion to object
+      if (stats.size === 0) {
+        console.log('No more pairs to merge.')
+        break
+      }
       const statsObj = Object.fromEntries(stats.entries())
-      const pair =
-        Object.entries(statsObj).reduce((a, b) => (statsObj[a[0]] > statsObj[b[0]] ? a : b))[0]
+      const pair = Object.entries(statsObj).reduce((a, b) => (statsObj[a[0]] > statsObj[b[0]] ? a : b))[0]
       const newIdx = 256 + i
       ids = merge(ids, pair.split(',').map(Number) as [number, number], newIdx)
       merges[pair] = newIdx
       const [p0, p1] = pair.split(',').map(Number)
       vocab[newIdx] = new Uint8Array([...vocab[p0], ...vocab[p1]])
       if (verbose) {
-        console.log(
-          `merge ${i + 1}/${numMerges}: ${pair} -> ${newIdx} (${
-            new TextDecoder().decode(vocab[newIdx])
-          }) had ${statsObj[pair]} occurrences`,
-        )
+        console.log(`Merge #${i + 1}: Pair [${pair}] -> New ID ${newIdx}`)
+        console.log(`Updated ids: ${ids}`)
       }
     }
 
@@ -57,20 +56,35 @@ export class BasicTokenizer extends Tokenizer {
 
   encode(text: string): number[] {
     const textBytes = new TextEncoder().encode(text)
-    // @todo: avoid conversion to object
-    const mergesObj = Object.fromEntries(this.merges.entries())
     let ids = Array.from(textBytes)
-    while (ids.length >= 2) {
-      const stats = getStats(ids)
-      const pair =
-        Object.entries(stats).reduce((a, b) => (mergesObj[a[0]] < mergesObj[b[0]] ? a : b))[0]
-      if (!(pair in this.merges)) {
-        break
+
+    let canMerge = true
+    while (canMerge) {
+      canMerge = false
+      const newIds: number[] = []
+      let i = 0
+
+      while (i < ids.length) {
+        let merged = false
+        for (const [pairStr, newId] of this.merges) {
+          const pair = pairStr.split(',').map(Number)
+          if (i < ids.length - 1 && ids[i] === pair[0] && ids[i + 1] === pair[1]) {
+            newIds.push(newId)
+            i += 2
+            merged = true
+            canMerge = true
+            break
+          }
+        }
+        if (!merged) {
+          newIds.push(ids[i])
+          i++
+        }
       }
 
-      const idx = mergesObj[pair]
-      ids = merge(ids, pair.split(',').map(Number) as [number, number], idx)
+      ids = newIds
     }
+
     return ids
   }
 }
