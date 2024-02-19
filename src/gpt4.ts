@@ -1,7 +1,6 @@
 import { get_encoding } from 'npm:tiktoken'
 import { RegexTokenizer } from './regex.ts'
 
-// Helper function to reconstruct the merge forest
 function bpe(
   mergeableRanks: Map<string, number>,
   token: Uint8Array,
@@ -32,7 +31,6 @@ function bpe(
   return parts
 }
 
-// Function to recover merges
 function recoverMerges(mergeableRanks: Map<string, number>): Map<string, number> {
   const merges = new Map<string, number>()
   mergeableRanks.forEach((rank, tokenKey) => {
@@ -77,20 +75,18 @@ export class GPT4Tokenizer extends RegexTokenizer {
     this.byteShuffle = new Map<number, number>()
     this.inverseByteShuffle = new Map<number, number>()
     for (let i = 0; i < 256; i++) {
-      this.byteShuffle.set(i, mergeableRanks.get(i.toString())!) // Assuming mergeableRanks has byte shuffles
+      this.byteShuffle.set(i, mergeableRanks.get(i.toString())!)
       this.inverseByteShuffle.set(mergeableRanks.get(i.toString())!, i)
     }
   }
 
   _encodeChunk(textBytes: Uint8Array): number[] {
-    // Before processing bytes, permute them
     const shuffledBytes = new Uint8Array(textBytes.map((b) => this.byteShuffle.get(b)!))
     const ids = super._encodeChunk(shuffledBytes)
     return ids
   }
 
   decode(ids: number[]): string {
-    // Un-permute the bytes before decoding
     const textBytes = ids.reduce((acc, id) => {
       const token = this.vocab.get(id)
       if (token) {
